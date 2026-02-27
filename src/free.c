@@ -1,4 +1,4 @@
-#include "../incl/malloc.h"
+#include "malloc.h"
 #include "../lib/printf/ft_printf.h"
 
 t_zone  *find_zone_for_ptr(void *ptr)

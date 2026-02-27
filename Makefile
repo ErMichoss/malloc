@@ -1,6 +1,6 @@
 NAME = libft_malloc_$(HOSTTYPE).so
 CC = gcc
-CFLAGS = -Wall -Werror -Wextra -fPIC -g
+CFLAGS = -Wall -Werror -Wextra -fPIC -g -Iincl
 RM = rm -f
 
 ifeq ($(HOSTTYPE),)

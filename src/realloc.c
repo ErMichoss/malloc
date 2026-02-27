@@ -1,4 +1,4 @@
-#include "../incl/malloc.h"
+#include "malloc.h"
 #include "../lib/printf/ft_printf.h"
 
 void    *realloc(void *ptr, size_t size)
