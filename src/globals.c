@@ -3,16 +3,14 @@
 
 t_malloc_data   data = {NULL, NULL, NULL, NULL, NULL};
 
-static int  debug_enabled = -1;
+static int  debug_cache = -1;
 
-int is_debug_enabled(void)
-{
+int debug_enabled(void) {
     char *env;
 
-    if (debug_enabled == -1)
-    {
-        env = getenv("MALLOC_VERBOSE");
-        debug_enabled = (env != NULL);
+    if (debug_cache == -1) {
+        env         = getenv("MALLOC_VERBOSE");
+        debug_cache = (env != NULL);
     }
-    return (debug_enabled);
+    return (debug_cache);
 }

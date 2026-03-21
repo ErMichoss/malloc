@@ -1,181 +1,157 @@
 #include "malloc.h"
 #include "../lib/printf/ft_printf.h"
 
-t_zone  *find_zone_for_ptr(void *ptr)
-{
-    t_zone  *current;
+t_zone  *zone_of(void *ptr) {
+    t_zone  *cursor;
 
-    current = data.tiny_head;
-    while (current)
-    {
-        if ((void *)current <= ptr && ptr < (void *)((char *)current + current->total_size))
-            return current;
-        current = current->next;
+    cursor = data.tiny_head;
+    while (cursor) {
+        if ((void *)cursor <= ptr && ptr < (void *)((char *)cursor + cursor->total_size))
+            return (cursor);
+        cursor = cursor->next;
     }
 
-    current = data.small_head;
-    while (current)
-    {
-        if ((void *)current <= ptr && ptr < (void*)((char *)current + current->total_size))
-            return current;
-        current = current->next;
+    cursor = data.small_head;
+    while (cursor) {
+        if ((void *)cursor <= ptr && ptr < (void *)((char *)cursor + cursor->total_size))
+            return (cursor);
+        cursor = cursor->next;
     }
 
-    current = data.large_head;
-    while (current)
-    {
-        if ((void *)current <= ptr && ptr < (void*)((char *)current + current->total_size))
-            return current;
-        current = current->next;
+    cursor = data.large_head;
+    while (cursor) {
+        if ((void *)cursor <= ptr && ptr < (void *)((char *)cursor + cursor->total_size))
+            return (cursor);
+        cursor = cursor->next;
     }
-    
+
     return (NULL);
-    
 }
 
-void    remove_zone_list(t_zone *zone_to_remove)
-{
+static void zone_unlink(t_zone *target) {
     t_zone  *prev;
-    t_zone  *current;
+    t_zone  *cursor;
 
     prev = NULL;
-    if (zone_to_remove->head->type == TINY)
-        current = data.tiny_head;
+    if (target->head->type == TINY)
+        cursor = data.tiny_head;
     else
-        current = data.small_head;
-    while (current)
-    {
-        if (current == zone_to_remove)
-        {
+        cursor = data.small_head;
+
+    while (cursor) {
+        if (cursor == target) {
             if (prev)
-                prev->next = current->next;
-            else
-            {
-                if (zone_to_remove->head->type == TINY)
-                    data.tiny_head = current->next;
+                prev->next = cursor->next;
+            else {
+                if (target->head->type == TINY)
+                    data.tiny_head = cursor->next;
                 else
-                    data.small_head = current->next;
+                    data.small_head = cursor->next;
             }
             return;
         }
-        prev = current;
-        current = current->next;
+        prev = cursor;
+        cursor = cursor->next;
     }
 }
-void    remove_large_zone(t_zone *zone_to_remove)
-{
+
+static void zone_unlink_large(t_zone *target) {
     t_zone  *prev;
-    t_zone  *current;
+    t_zone  *cursor;
 
-    prev = NULL;
-    current = data.large_head;
+    prev   = NULL;
+    cursor = data.large_head;
 
-    while (current)
-    {
-        if (current == zone_to_remove)
-        {
+    while (cursor) {
+        if (cursor == target) {
             if (prev)
-                prev->next = current->next;
+                prev->next = cursor->next;
             else
-                data.large_head = current->next;
+                data.large_head = cursor->next;
             return;
         }
-        prev = current;
-        current = current->next;
+        prev = cursor;
+        cursor = cursor->next;
     }
 }
 
-void    free(void *ptr)
-{
-    t_block *data_block;
-    t_block *aux_block;
-    t_block *head_block;
+void    free(void *ptr) {
+    t_block *block;
+    t_block *neighbor;
+    t_block *cursor;
     t_zone  *zone;
 
     if (!ptr)
         return;
-    
-    // 1. Encontrar el bloque de memoria y la zona a la que pertenece.
-    zone = find_zone_for_ptr(ptr);
-    if (!zone)
-    {
-        print_str("*** Error: double free detected or invalid pointer ***");
-        if (is_debug_enabled())
-            ft_printf("DEBUG: Error: double free detected or invalid pointer: %p\n", ptr);
+
+    // 1. Find the memory block and the zone it belongs to.
+    zone = zone_of(ptr);
+    if (!zone) {
+        str_print("*** Error: double free detected or invalid pointer ***");
+        if (debug_enabled())
+            ft_printf("DEBUG: Error: double free or invalid pointer: %p\n", ptr);
         exit(1);
     }
 
-    data_block = (t_block *)((char *)ptr - BLOCK_OFFSET);
-    if (data_block->is_free == true)
-    {
-        print_str("*** Error: double free detected ***\n");
-        if (is_debug_enabled())
+    block = (t_block *)((char *)ptr - BLOCK_OFFSET);
+    if (block->is_free == true) {
+        str_print("*** Error: double free detected ***");
+        if (debug_enabled())
             ft_printf("DEBUG: Error: double free detected: %p\n", ptr);
         exit(1);
     }
 
-    if (data_block->type == LARGE)
-    {
-        // 2. Desenlazar la zona de la lista y liberar (LARGE).
-        remove_large_zone(zone);
-        if (munmap(zone, zone->total_size) == -1)
-        {
-            print_str("Error: munmap failed for address");  
+    if (block->type == LARGE) {
+        // 2. Unlink the zone from the list and release it (LARGE).
+        zone_unlink_large(zone);
+        if (munmap(zone, zone->total_size) == -1) {
+            str_print("Error: munmap failed for address");
             return;
         }
-        if (is_debug_enabled())
-            ft_printf("DEBUG Free en block LARGE. Dirección liberada: %p\n", ptr);
+        if (debug_enabled())
+            ft_printf("DEBUG: Free on LARGE block. Released address: %p\n", ptr);
         return;
     }
-    else
-    {
-        data_block->is_free = true;
-        if (is_debug_enabled())
-            ft_printf("DEBUG: Free en block TINY/SMALL. Dirección liberada: %p\n", ptr);
-        
-        // 3. Fusión de bloques adyacentes libres (Coalescencia)
-        if (data_block->next != NULL && data_block->next->is_free == true)
-        {
-            aux_block = data_block->next;
-            data_block->size = data_block->size + aux_block->size + BLOCK_OFFSET;
-            data_block->next = aux_block->next;
-            if (data_block->next != NULL)
-                data_block->next->prev = data_block;
+    else {
+        block->is_free = true;
+        if (debug_enabled())
+            ft_printf("DEBUG: Free on TINY/SMALL block. Released address: %p\n", ptr);
+
+        // 3. Merge adjacent free blocks (Coalescing).
+        if (block->next != NULL && block->next->is_free == true) {
+            neighbor     = block->next;
+            block->size  = block->size + neighbor->size + BLOCK_OFFSET;
+            block->next  = neighbor->next;
+            if (block->next != NULL)
+                block->next->prev = block;
         }
-        if (data_block->prev != NULL && data_block->prev->is_free == true)
-        {
-            aux_block = data_block->prev;
-            aux_block->size = aux_block->size + data_block->size + BLOCK_OFFSET;
-            aux_block->next = data_block->next;
-            if (aux_block->next != NULL)
-                aux_block->next->prev = aux_block;
-            
-            data_block = aux_block;
+        if (block->prev != NULL && block->prev->is_free == true) {
+            neighbor         = block->prev;
+            neighbor->size   = neighbor->size + block->size + BLOCK_OFFSET;
+            neighbor->next   = block->next;
+            if (neighbor->next != NULL)
+                neighbor->next->prev = neighbor;
+            block = neighbor;
         }
 
-        head_block = zone->head;
-        while (head_block != NULL)
-        {
-            if (head_block->is_free == false)
+        // Check if the entire zone is now free.
+        cursor = zone->head;
+        while (cursor != NULL) {
+            if (cursor->is_free == false)
                 return;
-            head_block = head_block->next;
+            cursor = cursor->next;
         }
-        
-        // Si llegamos aquí, toda la zona está libre.
-        remove_zone_list(zone);
 
-        // Y la movemos a la nueva lista de zonas vacías
-        if (zone->head->type == TINY)
-        {
-            zone->next = data.empty_tiny_head;
+        // Move the zone to the empty zones list.
+        zone_unlink(zone);
+        if (zone->head->type == TINY) {
+            zone->next           = data.empty_tiny_head;
             data.empty_tiny_head = zone;
-        }
-        else
-        {
-            zone->next = data.empty_small_head;
+        } else {
+            zone->next            = data.empty_small_head;
             data.empty_small_head = zone;
         }
-        if (is_debug_enabled())
+        if (debug_enabled())
             ft_printf("DEBUG: Completely free zone, moving to the list of empty zones.\n");
     }
 }

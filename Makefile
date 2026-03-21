@@ -8,7 +8,7 @@ ifeq ($(HOSTTYPE),)
 endif
 
 SRC = src/malloc.c src/free.c src/realloc.c src/memory_zone.c src/aux.c \
-      src/globals.c src/blocks.c src/auxTwo.c src/memory_zone_bonus.c
+      src/globals.c src/blocks.c src/memory_zone_bonus.c
 
 OBJS = $(SRC:.c=.o)
 
