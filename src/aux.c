@@ -21,28 +21,10 @@ size_t  str_len(char *str) {
     return (i);
 }
 
-void    zone_append(t_zone **large_head, t_zone *zone) {
+void    zone_append(t_zone **head, t_zone *zone) {
     t_zone  *cursor;
 
-    cursor = *large_head;
-    while (cursor->next)
-        cursor = cursor->next;
-    cursor->next = zone;
-}
-
-void    zone_append_small(t_zone **small_head, t_zone *zone) {
-    t_zone  *cursor;
-
-    cursor = *small_head;
-    while (cursor->next)
-        cursor = cursor->next;
-    cursor->next = zone;
-}
-
-void    zone_append_tiny(t_zone **tiny_head, t_zone *zone) {
-    t_zone  *cursor;
-
-    cursor = *tiny_head;
+    cursor = *head;
     while (cursor->next)
         cursor = cursor->next;
     cursor->next = zone;

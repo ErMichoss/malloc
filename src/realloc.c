@@ -50,7 +50,7 @@ void    *realloc(void *ptr, size_t size) {
         return (ptr);
     }
 
-    new_ptr = malloc(size);
+    new_ptr = malloc(aligned_size);
     if (!new_ptr)
         return (NULL);
 
@@ -59,6 +59,6 @@ void    *realloc(void *ptr, size_t size) {
 
     if (debug_enabled())
         ft_printf("DEBUG: Realloc TINY/SMALL. New allocation. Address: %p. Size: %u\n",
-            new_ptr, (unsigned int)size);
+            new_ptr, (unsigned int)aligned_size);
     return (new_ptr);
 }

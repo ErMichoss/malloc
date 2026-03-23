@@ -69,12 +69,12 @@ void    *zone_create(size_t len, e_zone_type type) {
         if (!data.tiny_head)
             data.tiny_head = new_zone;
         else
-            zone_append_tiny(&data.tiny_head, new_zone);
+            zone_append(&data.tiny_head, new_zone);
     } else {
         if (!data.small_head)
             data.small_head = new_zone;
         else
-            zone_append_small(&data.small_head, new_zone);
+            zone_append(&data.small_head, new_zone);
     }
     return ((void *)(new_zone));
 }
@@ -126,5 +126,4 @@ void    *malloc(size_t size) {
                 zone, (void *)((char *)block + BLOCK_OFFSET), (unsigned int)block->size);
         return ((void *)((char *)block + BLOCK_OFFSET));
     }
-    return (NULL);
 }

@@ -18,13 +18,15 @@
 
 # define BLOCKS_PER_ZONE    100
 
-typedef enum {
+typedef enum
+{
     TINY,
     SMALL,
     LARGE
 }   e_zone_type;
 
-typedef struct s_block {
+typedef struct s_block
+{
     size_t          size;
     bool            is_free;
     e_zone_type     type;
@@ -32,14 +34,16 @@ typedef struct s_block {
     struct s_block  *prev;
 }   t_block;
 
-typedef struct s_zone {
+typedef struct s_zone
+{
     t_block         *head;
     size_t          total_size;
     struct s_zone   *next;
     char            padding[8];
 }   t_zone;
 
-typedef struct s_malloc_data {
+typedef struct s_malloc_data
+{
     t_zone  *tiny_head;
     t_zone  *small_head;
     t_zone  *large_head;
@@ -66,28 +70,12 @@ void    str_print(char *str);
 size_t  str_len(char *str);
 
 /**
- * @brief Appends a zone to the end of the large zone list.
- * @param large_head Pointer to the head of the large zone list.
+ * @brief Appends a zone to the end of the given zone list.
+ * @param head Pointer to the head of the zone list.
  * @param zone The zone to append.
  * @return void
  */
-void    zone_append(t_zone **large_head, t_zone *zone);
-
-/**
- * @brief Appends a zone to the end of the small zone list.
- * @param small_head Pointer to the head of the small zone list.
- * @param zone The zone to append.
- * @return void
- */
-void    zone_append_small(t_zone **small_head, t_zone *zone);
-
-/**
- * @brief Appends a zone to the end of the tiny zone list.
- * @param tiny_head Pointer to the head of the tiny zone list.
- * @param zone The zone to append.
- * @return void
- */
-void    zone_append_tiny(t_zone **tiny_head, t_zone *zone);
+void    zone_append(t_zone **head, t_zone *zone);
 
 /* ___ AUX_TWO ___ */
 

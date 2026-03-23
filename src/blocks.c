@@ -63,6 +63,7 @@ void    block_split(t_block *block, size_t size) {
         remainder           = (t_block *)((char *)block + size + BLOCK_OFFSET);
         remainder->size     = original_size - size - BLOCK_OFFSET;
         remainder->is_free  = true;
+        remainder->type     = block->type;
         remainder->prev     = block;
         remainder->next     = block->next;
 

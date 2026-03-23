@@ -1,6 +1,7 @@
 NAME = libft_malloc_$(HOSTTYPE).so
 CC = gcc
 CFLAGS = -Wall -Werror -Wextra -fPIC -g -Iincl
+TEST_CFLAGS = $(CFLAGS) -Wno-use-after-free
 RM = rm -f
 
 ifeq ($(HOSTTYPE),)
@@ -27,7 +28,7 @@ libft_malloc.so: $(NAME)
 	@ln -sf $(NAME) libft_malloc.so
 
 test: libft_malloc.so $(TEST_SRC)
-	$(CC) $(CFLAGS) $(TEST_SRC) -L. -lft_malloc -Wl,-rpath,'$$ORIGIN' -o $(TEST_EXEC)
+	$(CC) $(TEST_CFLAGS) $(TEST_SRC) -L. -lft_malloc -Wl,-rpath,'$$ORIGIN' -o $(TEST_EXEC)
 
 $(FT_PRINTF):
 	@make -C $(FT_PRINTF_DIR)
