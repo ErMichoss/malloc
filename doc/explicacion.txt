@@ -1,0 +1,23 @@
+Introducción — qué es esto
+"Seguro que has usado malloc alguna vez para pedir memoria dinámica. Pues bien, este proyecto consiste en reimplementar malloc, free y realloc desde cero, sin usar las del sistema. El objetivo es entender qué hay detrás de esas funciones que usas sin pensar."
+
+El problema fundamental
+"Cuando llamas a malloc(100), alguien tiene que ir al sistema operativo, pedirle memoria, y dártela. Pero ir al sistema operativo es caro. Si cada malloc hiciera una llamada al sistema, sería lentísimo. La solución es pedir memoria en bloques grandes de golpe, y luego repartirla internamente. Eso es exactamente lo que hace mi implementación."
+
+Las zonas — cómo se organiza la memoria
+"Mi código divide las asignaciones en tres categorías según su tamaño: TINY para cosas pequeñas hasta 128 bytes, SMALL para hasta 1024 bytes, y LARGE para todo lo demás.
+Para TINY y SMALL, en lugar de ir al sistema operativo cada vez, reservo de golpe una zona grande que tiene espacio para 100 bloques. Cuando alguien pide memoria, busco un hueco libre dentro de esa zona y se lo doy. Si no hay hueco, creo una zona nueva.
+Para LARGE, como son asignaciones grandes y poco frecuentes, cada una tiene su propia zona dedicada."
+
+Los bloques — cómo se rastrea qué está libre
+"Dentro de cada zona, la memoria está dividida en bloques. Cada bloque tiene una pequeña cabecera que guarda su tamaño, si está libre o no, y punteros al bloque anterior y siguiente — como una lista doblemente enlazada. Cuando alguien pide memoria, recorro la lista buscando un bloque libre que sea suficientemente grande."
+
+Split y coalescing — los dos trucos clave
+"Hay dos operaciones que hacen que esto sea eficiente. La primera es el split: si encuentro un bloque libre más grande de lo necesario, lo parto en dos — uno para el usuario y otro que queda libre para futuras asignaciones.
+La segunda es el coalescing, que pasa en el free: cuando liberas un bloque, miro si los bloques de al lado también están libres. Si es así, los fusiono en uno solo para evitar que la memoria se fragmente en trozos pequeños inútiles."
+
+Zonas vacías — reutilización
+"Cuando todos los bloques de una zona quedan libres, en vez de devolver esa memoria al sistema operativo inmediatamente, la guardo en una lista aparte de zonas vacías. Así, si luego necesito una zona nueva, la reutilizo sin tener que hacer otra llamada al sistema."
+
+Cierre
+"En resumen, es un gestor de memoria en miniatura. La idea central es minimizar las llamadas al sistema operativo agrupando la memoria en zonas, y dentro de esas zonas gestionar los bloques de forma eficiente con split y coalescing."
